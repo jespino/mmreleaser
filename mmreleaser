@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import os
+import subprocess
+import click
+
+@click.command()
+@click.option('--webapp-branch', default='master', help='Webapp branch or commit to use to build the release.')
+@click.option('--server-branch', default='master', help='Server branch or commit to use to build the release.')
+@click.option('--enterprise-branch', default='master', help='Enterprise branch or commit to use to build the release.')
+def release(webapp_branch, server_branch, enterprise_branch):
+    if not os.path.exists('code/mattermost-server'):
+        subprocess.call(['git', 'clone', 'https://github.com/mattermost/mattermost-server', 'code/mattermost-server'])
+    if not os.path.exists('code/mattermost-webapp'):
+        subprocess.call(['git', 'clone', 'https://github.com/mattermost/mattermost-webapp', 'code/mattermost-webapp'])
+    if not os.path.exists('code/enterprise'):
+        subprocess.call(['git', 'clone', 'https://github.com/mattermost/enterprise', 'code/enterprise'])
+
+    os.chdir('code/mattermost-server')
+    subprocess.call(['git', 'reset', '--hard'])
+    subprocess.call(['git', 'clean', '-x', '-f', '-d'])
+    subprocess.call(['git', 'pull'])
+    subprocess.call(['git', 'checkout', server_branch])
+    os.chdir('../mattermost-webapp')
+    subprocess.call(['git', 'reset', '--hard'])
+    subprocess.call(['git', 'clean', '-x', '-f', '-d'])
+    subprocess.call(['git', 'pull'])
+    subprocess.call(['git', 'checkout', webapp_branch])
+    os.chdir('../enterprise')
+    subprocess.call(['git', 'reset', '--hard'])
+    subprocess.call(['git', 'clean', '-x', '-f', '-d'])
+    subprocess.call(['git', 'pull'])
+    subprocess.call(['git', 'checkout', enterprise_branch])
+    os.chdir('../mattermost-webapp')
+    subprocess.call(['make', 'package'])
+    os.chdir('../mattermost-server')
+    os.environ["PWD"] = os.getcwd()
+    subprocess.call(['make', 'package'])
+
+    subprocess.call(['cp', 'dist/mattermost-*', '../../packages'])
+
+if __name__ == '__main__':
+    release()
