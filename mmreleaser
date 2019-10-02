@@ -31,6 +31,7 @@ def release(webapp_branch, server_branch, enterprise_branch):
     subprocess.call(['git', 'pull'])
     subprocess.call(['git', 'checkout', enterprise_branch])
     os.chdir('../mattermost-webapp')
+    subprocess.call(['make', 'build'])
     subprocess.call(['make', 'package'])
     os.chdir('../mattermost-server')
     os.environ["PWD"] = os.getcwd()
